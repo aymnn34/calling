@@ -1,5 +1,17 @@
 how to easily deploy it locally (it works) 
-# After organizing files correctly
+
+organize the files in this order : 
+
+webrtc-video-call/
+├── package.json
+├── server.js
+├── README.md
+└── public/             ← MUST HAVE THIS FOLDER!
+    ├── index.html      ← All 3 files go HERE
+    ├── style.css       ← inside public/
+    └── app.js          ← folder
+    
+# After organizing files correctly (you should have node js installed)
 npm install
 npm start
 ```
