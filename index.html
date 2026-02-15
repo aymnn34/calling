@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="One-to-one video calling with WebRTC">
+  <title>WebRTC Video Call</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📹</text></svg>">
+</head>
+<body>
+  <div id="app">
+    <!-- Join Screen -->
+    <div id="join-screen" class="screen active">
+      <div class="container">
+        <div class="card">
+          <div class="card-header">
+            <h1>📹 Video Call</h1>
+            <p>Enter a room name to start or join a call</p>
+          </div>
+          
+          <div class="card-body">
+            <form id="join-form">
+              <div class="form-group">
+                <label for="room-input">Room Name</label>
+                <input 
+                  type="text" 
+                  id="room-input" 
+                  class="form-control"
+                  placeholder="e.g., meeting-room-123"
+                  required
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+                <small class="form-hint">Share this room name with your friend</small>
+              </div>
+
+              <div class="form-group">
+                <label for="name-input">Your Name</label>
+                <input 
+                  type="text" 
+                  id="name-input" 
+                  class="form-control"
+                  placeholder="Enter your name"
+                  required
+                  autocomplete="name"
+                >
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-large" id="join-btn">
+                <span class="btn-text">Join Room</span>
+                <span class="btn-loading hidden">
+                  <span class="spinner"></span>
+                  Connecting...
+                </span>
+              </button>
+            </form>
+
+            <div id="join-error" class="alert alert-error hidden" role="alert"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Call Screen -->
+    <div id="call-screen" class="screen">
+      <div class="call-container">
+        <!-- Header -->
+        <header class="call-header">
+          <div class="room-info">
+            <span class="room-badge">
+              <span class="room-icon">🔐</span>
+              <span id="room-name">Room Name</span>
+            </span>
+          </div>
+          
+          <div class="call-status">
+            <span id="connection-status" class="status-indicator">
+              <span class="status-dot"></span>
+              <span class="status-text">Connecting...</span>
+            </span>
+          </div>
+          
+          <button id="leave-btn" class="btn btn-danger btn-small" title="Leave Call">
+            <span>Leave</span>
+          </button>
+        </header>
+
+        <!-- Video Container -->
+        <div class="video-container">
+          <!-- Remote Video (Main) -->
+          <div class="video-wrapper video-remote">
+            <video id="remote-video" autoplay playsinline></video>
+            
+            <!-- Waiting Overlay -->
+            <div id="waiting-overlay" class="waiting-overlay">
+              <div class="waiting-content">
+                <div class="pulse-loader">
+                  <div class="pulse-circle"></div>
+                  <div class="pulse-circle"></div>
+                  <div class="pulse-circle"></div>
+                </div>
+                <h3>Waiting for participant</h3>
+                <p>Share the room name with someone to start the call</p>
+                <div class="room-name-display">
+                  <code id="waiting-room-name"></code>
+                </div>
+              </div>
+            </div>
+
+            <div class="video-label remote-label">
+              <span id="remote-name">Remote</span>
+            </div>
+          </div>
+
+          <!-- Local Video (PIP) -->
+          <div class="video-wrapper video-local">
+            <video id="local-video" autoplay playsinline muted></video>
+            <div class="video-label local-label">
+              <span id="local-name">You</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <footer class="call-controls">
+          <div class="controls-container">
+            <button id="toggle-video-btn" class="control-btn control-video" title="Toggle Camera" aria-label="Toggle Camera">
+              <svg class="icon icon-video-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+              <svg class="icon icon-video-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+              <span class="control-label">Camera</span>
+            </button>
+
+            <button id="toggle-audio-btn" class="control-btn control-audio" title="Toggle Microphone" aria-label="Toggle Microphone">
+              <svg class="icon icon-audio-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <svg class="icon icon-audio-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <span class="control-label">Microphone</span>
+            </button>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
