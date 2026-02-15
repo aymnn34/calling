@@ -3,10 +3,16 @@
 // =============================================================================
 
 const CONFIG = {
-  // WebSocket URL - change this for deployment
-  wsUrl: window.location.protocol === 'https:' 
-    ? `wss://${window.location.host}` 
-    : `ws://${window.location.host}`,
+  // WebSocket URL - automatically detects correct URL
+  wsUrl: (() => {
+    // If running on localhost/127.0.0.1, use ws://localhost:3000
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'ws://localhost:3000';
+    }
+    // For deployed sites, use the same host with appropriate protocol
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}`;
+  })(),
   
   // ICE servers for NAT traversal
   iceServers: [
@@ -677,6 +683,3 @@ function hideError() {
 
 // =============================================================================
 // START APP
-// =============================================================================
-
-document.addEventListener('DOMContentLoaded', init);
